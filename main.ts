@@ -126,6 +126,7 @@ async function getContainers() {
       break;
     }
     chunks += text.slice(text.indexOf("\r\n"));
+    console.log(text);
   }
 
   const data = JSON.parse(chunks);
