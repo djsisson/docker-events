@@ -119,11 +119,9 @@ async function getContainers() {
     offset += n;
 
     // Process the chunk
-    const decoder = new TextDecoder();
-    const chunkText = decoder.decode(chunk);
     console.log(chunk.length);
     chunks.push(chunk);
-    if (chunk.length == 5) break;
+    if (chunk[chunk.length - 1] === 0) break;
   }
 
   const response = new Uint8Array(
