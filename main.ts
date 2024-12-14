@@ -107,38 +107,28 @@ async function getContainers() {
       "\r\n"
   );
   await conn.write(request);
-  const buffer = new Uint8Array(1024 * 1024); // 1MB buffer
-  const chunks = [];
 
-  let offset = 0;
+  let chunks = "";
+  let headers = false;
   while (true) {
+    const buffer = new Uint8Array(1024 * 1024); // 1MB buffer
     const n = await conn.read(buffer);
     if (n === null) break;
-
-    const chunk = buffer.subarray(offset, offset + n);
-    offset += n;
-
-    // Process the chunk
-    console.log(chunk.length);
-    chunks.push(chunk);
-    if (chunk[chunk.length - 1] === 0) break;
+    const chunk = buffer.subarray(0, n);
+    const decoder = new TextDecoder();
+    const text = decoder.decode(chunk);
+    if (text.endsWith("\r\n\r\n") && !headers) {
+      headers = true;
+      continue;
+    }
+    const size = text.slice(0, text.indexOf("\r\n")).trim();
+    if (size == "0") {
+      break;
+    }
+    chunks += text.slice(text.indexOf("\r\n"));
   }
 
-  const response = new Uint8Array(
-    chunks.reduce((acc, chunk) => acc + chunk.length, 0)
-  );
-  offset = 0;
-  chunks.forEach((chunk) => {
-    response.set(chunk, offset);
-    offset += chunk.length;
-  });
-  // Process the response
-  const decoder = new TextDecoder();
-  const responseBody = decoder.decode(
-    response.slice(5).filter((char) => char !== 0)
-  );
-
-  const data = JSON.parse(responseBody);
+  const data = JSON.parse(chunks);
   return data.map((container: { Id: string; Names: string[] }) => ({
     Id: container.Id,
     Names: container.Names,
