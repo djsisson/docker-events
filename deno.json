@@ -1,0 +1,5 @@
+{
+  "tasks": {
+    "dev": "deno run --watch --allow-net --allow-read=/var/run/docker.sock --allow-write=/var/run/docker.sock --allow-env main.ts"
+  }
+}

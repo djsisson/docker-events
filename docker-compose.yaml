@@ -1,0 +1,7 @@
+services:
+  deno-app:
+    build: .
+    environment:
+      - WEBSOCKET_URL=${WEBSOCKET_URL}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
