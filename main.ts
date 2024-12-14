@@ -122,6 +122,7 @@ async function getContainers() {
       chunk = chunk.slice(match[0].length);
     }
     chunks += chunk;
+    console.log(chunks);
     if (chunks.endsWith("\r\n")) {
       break;
     }
