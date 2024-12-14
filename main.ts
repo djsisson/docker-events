@@ -107,20 +107,38 @@ async function getContainers() {
       "\r\n"
   );
   await conn.write(request);
-  const decoder = new TextDecoder();
-  const buffer = new Uint8Array(1024);
-  let chunks = "";
+  const buffer = new Uint8Array(1024 * 1024); // 1MB buffer
+  const chunks = [];
+
+  let offset = 0;
   while (true) {
     const n = await conn.read(buffer);
-    if (n === null || n === 0) break;
-    const chunk = decoder.decode(buffer.subarray(0, n));
-    // Skip headers
-    if (chunk.startsWith("HTTP/1.1")) continue;
-    if (chunk.endsWith("\r\n\r\n")) break;
-    chunks += chunk;
+    if (n === null) break;
+
+    const chunk = buffer.subarray(offset, offset + n);
+    offset += n;
+
+    // Process the chunk
+
+    chunks.push(chunk);
+    if (chunk.length === 5) break;
   }
-  conn.close();
-  const data = JSON.parse(chunks.slice(chunks.indexOf("\n") + 1));
+
+  const response = new Uint8Array(
+    chunks.reduce((acc, chunk) => acc + chunk.length, 0)
+  );
+  offset = 0;
+  chunks.forEach((chunk) => {
+    response.set(chunk, offset);
+    offset += chunk.length;
+  });
+  // Process the response
+  const decoder = new TextDecoder();
+  const responseBody = decoder.decode(
+    response.slice(5).filter((char) => char !== 0)
+  );
+
+  const data = JSON.parse(responseBody);
   return data.map((container: { Id: string; Names: string[] }) => ({
     Id: container.Id,
     Names: container.Names,
