@@ -113,22 +113,18 @@ async function getContainers() {
   while (true) {
     const n = await conn.read(buffer);
     if (n === null || n === 0) break;
-    let chunk = decoder.decode(buffer.subarray(0, n));
+    const chunk = decoder.decode(buffer.subarray(0, n));
     // Skip headers
     if (chunk.startsWith("HTTP/1.1")) continue;
-    // Skip chunk length indicator and newline character
-    const match = chunk.match(/^([0-9a-fA-F]+)\r\n/);
-    if (match) {
-      chunk = chunk.slice(match[0].length);
-    }
+    if (chunk.endsWith("\r\n\r\n")) break;
     chunks += chunk;
-    console.log(chunks);
-    if (chunks.endsWith("\r\n")) {
-      break;
-    }
   }
   conn.close();
-  return JSON.parse(chunks);
+  const data = JSON.parse(chunks.slice(chunks.indexOf("\n") + 1));
+  return data.map((container: { Id: string; Names: string[] }) => ({
+    Id: container.Id,
+    Names: container.Names,
+  }));
 }
 
 // Serve the HTML page on port 8000
