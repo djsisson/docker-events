@@ -107,7 +107,7 @@ async function getContainers() {
       "\r\n"
   );
   await conn.write(request);
-
+  console.log("request sent");
   let chunks = "";
   let headers = false;
   while (true) {
@@ -117,6 +117,7 @@ async function getContainers() {
     const chunk = buffer.subarray(0, n);
     const decoder = new TextDecoder();
     const text = decoder.decode(chunk);
+    console.log(text);
     if (text.endsWith("\r\n\r\n") && !headers) {
       headers = true;
       continue;
@@ -126,7 +127,6 @@ async function getContainers() {
       break;
     }
     chunks += text.slice(text.indexOf("\r\n"));
-    console.log(text);
   }
 
   const data = JSON.parse(chunks);
