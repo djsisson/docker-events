@@ -107,7 +107,6 @@ async function getContainers() {
       "\r\n"
   );
   await conn.write(request);
-  console.log("request sent");
   let chunks = "";
   let headers = false;
   while (true) {
@@ -117,19 +116,23 @@ async function getContainers() {
     const chunk = buffer.subarray(0, n);
     const decoder = new TextDecoder();
     const text = decoder.decode(chunk);
-    if (text.endsWith("\r\n\r\n") && !headers) {
+    const data = text.split("\r\n\r\n");
+
+    if (!headers && data.length == 2) {
       headers = true;
       continue;
+    } else if (!headers) {
+      data.shift();
+      data.shift();
+      headers = true;
     }
-    const size = text.slice(0, text.indexOf("\r\n")).trim();
-    console.log(size);
-    if (size == "0") {
+    const split = data[0];
+    if (split == "0") {
       break;
     }
-    chunks += text.slice(text.indexOf("\r\n"));
-    if (text.endsWith("\r\n\r\n")) break;
+    chunks += split.slice(split.indexOf("\r\n"));
+    if (data.length > 1 && data[1].length == 0) break;
   }
-
   const data = JSON.parse(chunks);
   return data.map((container: { Id: string; Names: string[] }) => ({
     Id: container.Id,
