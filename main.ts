@@ -117,16 +117,17 @@ async function getContainers() {
     const chunk = buffer.subarray(0, n);
     const decoder = new TextDecoder();
     const text = decoder.decode(chunk);
-    console.log(text);
     if (text.endsWith("\r\n\r\n") && !headers) {
       headers = true;
       continue;
     }
     const size = text.slice(0, text.indexOf("\r\n")).trim();
+    console.log(size);
     if (size == "0") {
       break;
     }
     chunks += text.slice(text.indexOf("\r\n"));
+    if (text.endsWith("\r\n\r\n")) break;
   }
 
   const data = JSON.parse(chunks);
