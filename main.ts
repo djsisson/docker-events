@@ -122,8 +122,8 @@ async function getContainers() {
       headers = true;
       continue;
     } else if (!headers) {
-      chunks += data[2].slice(data[2].indexOf("\r\n"));
-      console.log(text);
+      chunks += data[1].slice(data[1].indexOf("\r\n"));
+      console.log(chunks);
       break;
     }
     const split = data[0];
