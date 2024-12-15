@@ -122,7 +122,7 @@ async function getContainers() {
       headers = true;
       continue;
     } else if (!headers) {
-      chunks += data[1].slice(data[1].indexOf("\r\n"));
+      chunks += data[1].slice(data[1].indexOf("\r\n"), data[1].length - 1);
       console.log(chunks);
       break;
     }
