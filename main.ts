@@ -123,6 +123,7 @@ async function getContainers() {
       continue;
     } else if (!headers) {
       chunks += data[2].slice(data[2].indexOf("\r\n"));
+      console.log(chunks);
       break;
     }
     const split = data[0];
