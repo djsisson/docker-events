@@ -122,7 +122,7 @@ async function getContainers() {
       headers = true;
       continue;
     } else if (!headers) {
-      chunks += data[3].slice(data[3].indexOf("\r\n"));
+      chunks += data[2].slice(data[2].indexOf("\r\n"));
       break;
     }
     const split = data[0];
