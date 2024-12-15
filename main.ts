@@ -112,7 +112,7 @@ async function getContainers() {
   while (true) {
     const buffer = new Uint8Array(1024 * 1024); // 1MB buffer
     const n = await conn.read(buffer);
-    if (n === null) break;
+    if (n === null || n === 5) break;
     const chunk = buffer.subarray(0, n);
     const decoder = new TextDecoder();
     const text = decoder.decode(chunk);
@@ -122,16 +122,14 @@ async function getContainers() {
       headers = true;
       continue;
     } else if (!headers) {
-      data.shift();
-      data.shift();
-      headers = true;
+      chunks += data[3].slice(data[3].indexOf("\r\n"));
+      break;
     }
     const split = data[0];
     if (split == "0") {
       break;
     }
     chunks += split.slice(split.indexOf("\r\n"));
-    if (data.length > 1 && data[1].length == 0) break;
   }
   const data = JSON.parse(chunks);
   return data.map((container: { Id: string; Names: string[] }) => ({
