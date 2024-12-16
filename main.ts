@@ -56,10 +56,9 @@ async function readResponse(conn: Deno.Conn) {
     if (n === null || n === 5) break;
     const chunk = buffer.subarray(0, n);
     const lastFiveBytes = chunk.slice(-5);
-    console.log(lastFiveBytes);
     chunks.push(chunk);
     if (
-      lastFiveBytes.every((byte, index) => byte === [0, 13, 10, 13, 10][index])
+      lastFiveBytes.every((byte, index) => byte === [48, 13, 10, 13, 10][index])
     ) {
       break;
     }
