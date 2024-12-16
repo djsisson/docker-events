@@ -96,14 +96,19 @@ async function readResponse(conn: Deno.Conn) {
   if (data.length === 2) {
     const _headers = data[0];
     let body = data[1];
-    // process headers and body
     let concatenatedBody = "";
-    while (body.length > 0) {
-      const frame = body.split("\r\n", 2);
-      const frameContents = frame[1].slice(0, parseInt(`0x${frame[0]}`, 16));
-      concatenatedBody += frameContents;
-      body = frame[1].slice(frameContents.length);
+    if (isChunked) {
+      while (body.length > 0) {
+        const frame = body.split("\r\n", 2);
+        const frameContents = frame[1].slice(0, parseInt(`0x${frame[0]}`, 16));
+        concatenatedBody += frameContents;
+        body = frame[1].slice(frameContents.length);
+      }
+    } else {
+      concatenatedBody = body;
     }
+    // process headers and body
+
     return concatenatedBody;
   } else {
     // handle the case where \r\n\r\n is not found
