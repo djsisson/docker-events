@@ -62,10 +62,14 @@ async function readResponse(conn: Deno.Conn) {
         .decode(chunk)
         .split("\r\n\r\n", 2)[0]
         .split("\n");
-      console.log(headerLines);
       headerLines.forEach((line) => {
         if (line.startsWith("Transfer-Encoding:")) {
           isChunked = line.split(" ")[1] === "chunked";
+        } else if (line.startsWith("Content-Length:")) {
+          const contentLength = Number(line.split(" ")[1]);
+          if (contentLength > 0) {
+            isChunked = false;
+          }
         }
       });
       headers = true;
