@@ -50,13 +50,26 @@ async function containerEvents(ws: WebSocket, abortSignal: AbortSignal) {
 
 async function readResponse(conn: Deno.Conn) {
   const chunks = [];
-  while (true) {
+  let headers = false;
+  let isChunked = true;
+  while (isChunked) {
     const buffer = new Uint8Array(1024 * 1024); // 1MB buffer
     const n = await conn.read(buffer);
     if (n === null || n === 5) break;
     const chunk = buffer.subarray(0, n);
+    if (!headers) {
+      const headerLines = new TextDecoder()
+        .decode(chunk)
+        .split("\r\n\r\n", 2)[0]
+        .split("\n");
+      headerLines.forEach((line) => {
+        if (line.startsWith("Transfer-Encoding:")) {
+          isChunked = line.split(" ")[1] === "chunked";
+        }
+      });
+      headers = true;
+    }
     const lastFiveBytes = chunk.slice(-5);
-    console.log(lastFiveBytes);
     chunks.push(chunk);
     if (
       lastFiveBytes.every((byte, index) => byte === [48, 13, 10, 13, 10][index])
