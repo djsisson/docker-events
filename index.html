@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>Docker Events</h1>
+    <a href="/stats"><h1>Stats</h1></a>
+    <select
+      id="container-select"
+      style="margin-bottom: 10px"
+      onchange="clearEvents()"
+    ></select>
+    <ul id="events" style="list-style: none; padding: 0; margin: 0">
+      <!-- events will be added here -->
+    </ul>
+    <script>
+      const ws = new WebSocket("/ws");
+      const containerSelect = document.getElementById("container-select");
+      const eventsList = document.getElementById("events");
+
+      // Get the list of containers from the Docker API
+      fetch("/containers")
+        .then((response) => response.json())
+        .then((containers) => {
+          containers.forEach((container) => {
+            const option = document.createElement("option");
+            option.value = container.Id;
+            option.textContent = container.Names[0].slice(1);
+            containerSelect.appendChild(option);
+          });
+        });
+      ws.onopen = function () {
+        ws.send("events");
+      };
+      ws.onmessage = function (event) {
+        const eventData = JSON.parse(event.data);
+        const selectedContainerId = containerSelect.value;
+        if (eventData.Actor.ID === selectedContainerId) {
+          const li = document.createElement("li");
+          li.textContent = event.data;
+          li.style.marginBottom = "10px";
+          eventsList.appendChild(li);
+        }
+      };
+
+      function clearEvents() {
+        eventsList.innerHTML = "";
+      }
+    </script>
+  </body>
+</html>
