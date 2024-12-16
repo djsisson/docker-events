@@ -197,14 +197,18 @@ function formatStats(stats: string) {
   const number_cpus =
     cpu_stats.cpu_usage?.percpu_usage?.length || cpu_stats.online_cpus;
   const CPU_usage = (cpu_delta / system_cpu_delta) * number_cpus * 100.0;
-  const networkRead =  (networks) ? (Object.values(networks) as Network[]).reduce(
-    (acc, network: Network) => acc + network.rx_bytes,
-    0
-  ): 0;
-  const networkWrite = (networks) ? (Object.values(networks) as Network[]).reduce(
-    (acc, network: Network) => acc + network.tx_bytes,
-    0
-  ): 0;
+  const networkRead = networks
+    ? (Object.values(networks) as Network[]).reduce(
+        (acc, network: Network) => acc + network.rx_bytes,
+        0
+      )
+    : 0;
+  const networkWrite = networks
+    ? (Object.values(networks) as Network[]).reduce(
+        (acc, network: Network) => acc + network.tx_bytes,
+        0
+      )
+    : 0;
 
   return {
     ContainerID: id.slice(0, 12),
