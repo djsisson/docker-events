@@ -114,6 +114,7 @@ async function getContainers(all: boolean) {
       Names: container.Names,
     }));
   } catch (_error) {
+    console.log(_error);
     return [];
   }
 }
@@ -141,6 +142,7 @@ async function getContainersWithStats() {
   const containersWithStats = await Promise.all(
     containers.map(async (container: { Id: string }) => {
       const stats = await getContainerStats(container.Id);
+      console.log(container.Id.slice(0, 12), "stats");
       return formatStats(stats);
     })
   );
