@@ -141,6 +141,7 @@ async function getContainersWithStats() {
   const containers = await getContainers(false);
   const containersWithStats = await Promise.all(
     containers.map(async (container: { Id: string }) => {
+      console.log(container.Id.slice(0, 12), "getting stats");
       const stats = await getContainerStats(container.Id);
       console.log(container.Id.slice(0, 12), "stats");
       return formatStats(stats);
