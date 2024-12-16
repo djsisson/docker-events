@@ -170,7 +170,7 @@ function formatStats(stats: string) {
   const system_cpu_delta =
     cpu_stats.system_cpu_usage - precpu_stats.system_cpu_usage;
   const number_cpus =
-    cpu_stats.cpu_usage.percpu_usage.length || cpu_stats.online_cpus;
+    cpu_stats.cpu_usage?.percpu_usage.length || cpu_stats.online_cpus;
   const CPU_usage = (cpu_delta / system_cpu_delta) * number_cpus * 100.0;
   const networkRead = (Object.values(networks) as Network[]).reduce(
     (acc, network: Network) => acc + network.rx_bytes,
