@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/docker/docker/api/types"
 	Container "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/client"
@@ -189,11 +190,25 @@ func getContainerStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	statsChan := make(chan ContainerDetails)
+	var wg sync.WaitGroup
 	var stats []ContainerDetails
 
 	for _, container := range containers {
-		cntStats := ContainerStats(cli, container)
-		stats = append(stats, cntStats)
+		wg.Add(1)
+		go func(container types.Container) {
+			defer wg.Done()
+			statsChan <- ContainerStats(cli, container)
+		}(container)
+	}
+
+	go func() {
+		wg.Wait()
+		close(statsChan)
+	}()
+
+	for stat := range statsChan {
+		stats = append(stats, stat)
 	}
 
 	jsonBytes, err := json.Marshal(stats)
