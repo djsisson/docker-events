@@ -49,7 +49,7 @@ async function containerEvents(ws: WebSocket, abortSignal: AbortSignal) {
 }
 
 async function readResponse(conn: Deno.Conn) {
-  const chunks = [];
+  let chunks = "";
   let headers = false;
   let isChunked = true;
   while (isChunked) {
@@ -58,62 +58,28 @@ async function readResponse(conn: Deno.Conn) {
     if (n === null || n === 5) break;
     const chunk = buffer.subarray(0, n);
     if (!headers) {
-      const headerLines = new TextDecoder()
-        .decode(chunk)
-        .split("\r\n\r\n", 2)[0]
-        .split("\n");
+      const data = new TextDecoder().decode(chunk).split("\r\n\r\n", 2);
+      const headerLines = data[0].split("\n");
       headerLines.forEach((line) => {
-        if (line.startsWith("Transfer-Encoding:")) {
-          isChunked = line.split(" ")[1] === "chunked";
-        } else if (line.startsWith("Content-Length:")) {
+        if (line.startsWith("Content-Length:")) {
           const contentLength = Number(line.split(" ")[1]);
           if (contentLength > 0) {
+            chunks = data[1];
             isChunked = false;
           }
         }
       });
       headers = true;
-    }
-    const lastFiveBytes = chunk.slice(-5);
-    chunks.push(chunk);
-    if (
-      lastFiveBytes.every((byte, index) => byte === [48, 13, 10, 13, 10][index])
-    ) {
-      break;
-    }
-  }
-  const decoder = new TextDecoder();
-  const concatenatedChunks = new Uint8Array(
-    chunks.reduce((acc, chunk) => acc + chunk.length, 0)
-  );
-  let offset = 0;
-  for (const chunk of chunks) {
-    concatenatedChunks.set(chunk, offset);
-    offset += chunk.length;
-  }
-  const text = decoder.decode(concatenatedChunks);
-  const data = text.split("\r\n\r\n", 2);
-  if (data.length === 2) {
-    const _headers = data[0];
-    let body = data[1];
-    let concatenatedBody = "";
-    if (isChunked) {
-      while (body.length > 0) {
-        const frame = body.split("\r\n", 2);
-        const frameContents = frame[1].slice(0, parseInt(`0x${frame[0]}`, 16));
-        concatenatedBody += frameContents;
-        body = frame[1].slice(frameContents.length);
+      if (data[1].length > 5) {
+        chunks = data[1].split("\r\n", 2)[1];
       }
-    } else {
-      concatenatedBody = body;
+      continue;
     }
-    // process headers and body
-
-    return concatenatedBody;
-  } else {
-    // handle the case where \r\n\r\n is not found
-    return text;
+    const text = new TextDecoder().decode(chunk);
+    const frame = text.split("\r\n", 2);
+    chunks += frame[1];
   }
+  return chunks;
 }
 
 // Function to get the list of containers from the Docker API

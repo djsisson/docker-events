@@ -1,5 +1,6 @@
 services:
-  deno-app:
-    build: .
+  docker-app:
+    build: ./agent
+    image: docker-app:latest
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock

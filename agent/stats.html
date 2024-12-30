@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Container Stats</title>
+    <style>
+      table {
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="/"><h1>Events</h1></a>
+    <h1>Container Stats</h1>
+    <table id="stats-table">
+      <thead>
+        <tr>
+          <th>Container ID</th>
+          <th>Name</th>
+          <th>CPU %</th>
+          <th>Mem Usage / Limit</th>
+          <th>Mem %</th>
+          <th>Net I/O</th>
+          <th>PIDS</th>
+        </tr>
+      </thead>
+      <tbody id="stats-body"></tbody>
+    </table>
+
+    <script>
+      const statsTable = document.getElementById("stats-table");
+      const statsBody = document.getElementById("stats-body");
+      const ws = new WebSocket("/ws");
+      async function updateStats() {}
+
+      ws.onopen = function () {
+        ws.send("stats");
+        setInterval(() => ws.send("stats"), 5000);
+      };
+
+      ws.onmessage = function (event) {
+        const eventData = JSON.parse(event.data);
+
+        statsBody.innerHTML = "";
+        eventData.forEach((stat) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+          <td>${stat.id}</td>
+          <td>${stat.name}</td>
+          <td>${stat.cpuUsage}%</td>
+          <td>${stat.memUsed} / ${stat.memAvailable}</td>
+          <td>${stat.memUsage}%</td>
+          <td>${stat.netRead} / ${stat.netWrite}</td>
+          <td>${stat.pids}</td>
+        `;
+          statsBody.appendChild(row);
+        });
+      };
+    </script>
+  </body>
+</html>
