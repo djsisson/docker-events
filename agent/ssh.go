@@ -1,8 +1,6 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"io"
 	"log"
 	"net"
@@ -11,12 +9,11 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"golang.org/x/crypto/ssh"
 )
 
-func sshmain() {
+func sshmain() (*client.Client, error) {
 
 	// SSH connection details
 	sshUser := "root"
@@ -49,15 +46,17 @@ func sshmain() {
 	sshClient, err := ssh.Dial("tcp", sshHost+":"+sshPort, config)
 	if err != nil {
 		log.Fatalf("Unable to connect to SSH server: %v", err)
+		return nil, err
 	}
-	defer sshClient.Close()
+	//defer sshClient.Close()
 
 	// Create a local listener for the Docker API tunnel
 	localListener, err := net.Listen("unix", "/tmp/docker.sock")
 	if err != nil {
 		log.Fatalf("Unable to create local listener: %v", err)
+		return nil, err
 	}
-	defer localListener.Close()
+	//defer localListener.Close()
 
 	var wg sync.WaitGroup
 	shutdown := make(chan struct{})
@@ -126,20 +125,8 @@ func sshmain() {
 	cli, err := client.NewClientWithOpts(client.WithHost("unix:///tmp/docker.sock"), client.WithAPIVersionNegotiation())
 	if err != nil {
 		log.Fatalf("Error creating Docker client: %v", err)
+		return nil, err
 	}
 
-	ctx := context.Background()
-
-	// Get list of running containers on the remote host
-	containers, err := cli.ContainerList(ctx, container.ListOptions{})
-	if err != nil {
-		log.Fatalf("Error listing containers: %v", err)
-	}
-
-	for _, container := range containers {
-		fmt.Printf("Container ID: %s, Name: %s, Image: %s\n", container.ID[0:12], container.Names[0][1:], container.Image)
-	}
-
-	// Wait for user input to exit
-	select {}
+	return cli, nil
 }

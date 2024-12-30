@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sort"
 	"sync"
 	"time"
 
@@ -90,7 +91,6 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 			}
 			return
 		}
-		fmt.Printf("Receive message %s", string(message))
 		var ctx context.Context
 		mu.Lock()
 		if cancelFn != nil {
@@ -103,13 +103,33 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		switch expression := string(message); expression {
 		case "stats":
 			{
-				var containerStats []ContainerDetails
 				containers := ContainerList(cli, false)
+				statsChan := make(chan ContainerDetails)
+				var wg sync.WaitGroup
+				var stats []ContainerDetails
+
 				for _, container := range containers {
-					containerStats = append(containerStats, ContainerStats(cli, container))
+					wg.Add(1)
+					go func(container types.Container) {
+						defer wg.Done()
+						statsChan <- ContainerStats(cli, container)
+					}(container)
 				}
-				if len(containerStats) > 0 {
-					err = c.WriteJSON(containerStats)
+
+				go func() {
+					wg.Wait()
+					close(statsChan)
+				}()
+
+				for stat := range statsChan {
+					stats = append(stats, stat)
+				}
+
+				if len(stats) > 0 {
+					sort.Slice(stats, func(i, j int) bool {
+						return stats[i].Id < stats[j].Id
+					})
+					err = c.WriteJSON(stats)
 				}
 				if err != nil {
 					fmt.Println(err)
